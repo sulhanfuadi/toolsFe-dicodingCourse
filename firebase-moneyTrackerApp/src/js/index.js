@@ -11,6 +11,7 @@ import Edit from './pages/transactions/edit';
 import Login from './pages/auth/login';
 import Register from './pages/auth/register';
 import * as bootstrap from 'bootstrap';
+import CheckUserAuth from './pages/auth/check-user-auth';
 
 const routes = {
   '/': Dashboard,
@@ -35,6 +36,8 @@ const initPages = () => {
 
 window.addEventListener('DOMContentLoaded', async () => {
   initPages();
+
+  CheckUserAuth.checkLoginState();
 
   const route = detectRoute();
   route.init();
