@@ -1,4 +1,5 @@
 import CheckUserAuth from './auth/check-user-auth';
+import Transactions from '../network/transactions';
 
 const Dashboard = {
   async init() {
@@ -9,25 +10,37 @@ const Dashboard = {
   },
 
   async _initialData() {
-    const fetchRecords = await fetch('/data/DATA.json');
-    const responseRecords = await fetchRecords.json();
-    this._userTransactionsHistory = responseRecords.results.transactionsHistory;
-    this._populateTransactionsRecordToTable(this._userTransactionsHistory);
-    this._populateTransactionsDataToCard(this._userTransactionsHistory);
+    try {
+      const response = await Transactions.getAll();
+      const responseRecords = response.data.results;
+      this._userTransactionsHistory = responseRecords.transactionsHistory;
+      this._populateTransactionsRecordToTable(this._userTransactionsHistory);
+      this._populateTransactionsDataToCard(this._userTransactionsHistory);
+    } catch (error) {
+      console.error(error);
+    }
   },
 
   _initialListener() {
     const recordDetailModal = document.getElementById('recordDetailModal');
     recordDetailModal.addEventListener('show.bs.modal', (event) => {
-      const modalTitle = recordDetailModal.querySelector('.modal-title');
-      modalTitle.focus();
+      /* ... */
+    });
 
-      const button = event.relatedTarget;
-      const dataRecord = this._userTransactionsHistory.find((item) => {
-        return item.id == button.dataset.recordId;
+    const deleteRecordBtns = document.querySelectorAll('#recordsTable tbody a[id^="delete"]');
+    deleteRecordBtns.forEach((item) => {
+      item.addEventListener('click', async (event) => {
+        event.preventDefault();
+        const recordId = event.target.dataset.recordId;
+        try {
+          const response = await Transactions.destroy(recordId);
+          window.alert('Transaction has been destroyed');
+          window.location.href = '/';
+        } catch (error) {
+          console.error(error);
+        }
+        this._initialData();
       });
-
-      this._populateDetailTransactionToModal(dataRecord);
     });
   },
 
@@ -115,24 +128,29 @@ const Dashboard = {
   _templateBodyTable(index, transactionRecord) {
     return `
       <tr>
-        <th class="text-center">${parseInt(index, 10) + 1}</th>
+        <th class="text-center">${index}</th>
         <td>${transactionRecord.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}</td>
         <td>${transactionRecord.name}</td>
         <td>${transactionRecord.amount}</td>
         <td>${transactionRecord.date}</td>
         <td>
           <div class="d-flex justify-content-center align-items-center gap-2">
-            <a class="btn btn-sm btn-primary" href="#"
-               data-bs-toggle="modal" data-bs-target="#recordDetailModal" 
-               data-record-id="${transactionRecord.id}">
+            <a class="btn btn-sm btn-primary" 
+               data-bs-toggle="modal"
+               data-bs-target="#recordDetailModal" 
+               data-record-id="${transactionRecord.id}"
+            >
               <i class="bi bi-eye-fill me-1"></i>Show
             </a>
-            <a class="btn btn-sm btn-warning" href="/transactions/edit.html?id=${
-              transactionRecord.id
-            }">
+            <a class="btn btn-sm btn-warning"
+               href="/transactions/edit.html?id=${transactionRecord.id}"
+            >
               <i class="bi bi-pen-fill me-1"></i>Edit
             </a>
-            <a class="btn btn-sm btn-danger" href="#">
+            <a class="btn btn-sm btn-danger" href="#"
+               id="delete-${transactionRecord.id}"
+               data-record-id="${transactionRecord.id}"
+            >
               <i class="bi bi-trash3-fill me-1"></i>Delete
             </a>
           </div>

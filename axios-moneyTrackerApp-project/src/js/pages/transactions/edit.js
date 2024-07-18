@@ -1,4 +1,5 @@
 import CheckUserAuth from '../auth/check-user-auth';
+import Transactions from '../../network/transactions';
 
 const Edit = {
   async init() {
@@ -33,20 +34,18 @@ const Edit = {
   },
 
   async _initialData() {
-    const transactionId = Number(this._getTransactionId());
-
+    const transactionId = this._getTransactionId();
     if (!transactionId) {
       alert('Data dengan id yang dicari tidak ditemukan');
       return;
     }
-
-    const fetchRecords = await fetch('/data/DATA.json');
-    const responseRecords = await fetchRecords.json();
-    const userTransactionsHistory = responseRecords.results.transactionsHistory;
-
-    const dataRecord = userTransactionsHistory.find((item) => item.id === transactionId);
-
-    this._populateTransactionToForm(dataRecord);
+    try {
+      const response = await Transactions.getById(transactionId);
+      const responseRecords = response.data.results;
+      this._populateTransactionToForm(responseRecords);
+    } catch (error) {
+      console.error(error);
+    }
   },
 
   _initialListener() {
@@ -64,14 +63,23 @@ const Edit = {
     );
   },
 
-  _sendPost() {
+  async _sendPost() {
     const formData = this._getFormData();
 
     if (this._validateFormData({ ...formData })) {
       console.log('formData');
       console.log(formData);
 
-      // this._goToDashboardPage();
+      try {
+        const response = await Transactions.update({
+          id: this._getTransactionId(),
+          ...formData,
+        });
+        window.alert(`Transaction with id ${this._getTransactionId()} has been edited`);
+        this._goToDashboardPage();
+      } catch (error) {
+        console.error(error);
+      }
     }
   },
 
@@ -109,9 +117,9 @@ const Edit = {
 
     nameInput.value = transactionRecord.name;
     amountInput.value = transactionRecord.amount;
-    dateInput.value = transactionRecord.date;
-    evidenceInput.setAttribute('src', transactionRecord.evidenceUrl);
-    evidenceInput.setAttribute('alt', transactionRecord.name);
+    dateInput.value = transactionRecord.date.slice(0, 16);
+    inputImagePreviewEdit.setAttribute('defaultImage', transactionRecord.evidenceUrl);
+    inputImagePreviewEdit.setAttribute('defaultImageAlt', transactionRecord.name);
     descriptionInput.value = transactionRecord.description;
     typesInput.forEach((item) => {
       item.checked = item.value === transactionRecord.type;
