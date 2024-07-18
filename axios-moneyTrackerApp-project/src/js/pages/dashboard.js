@@ -1,5 +1,9 @@
+import CheckUserAuth from './auth/check-user-auth';
+
 const Dashboard = {
   async init() {
+    CheckUserAuth.checkLoginState();
+
     await this._initialData();
     this._initialListener();
   },
@@ -50,7 +54,7 @@ const Dashboard = {
         amountExpense += item.amount;
       }
     });
-    
+
     document
       .querySelector('#transactions-card')
       .setAttribute('content', `${transactionsHistory.length} Transaksi`);
