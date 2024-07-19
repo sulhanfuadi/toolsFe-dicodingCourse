@@ -37,11 +37,12 @@ const Dashboard = {
         event.preventDefault();
 
         const recordId = event.target.dataset.recordId;
+        const recordEvidence = event.target.dataset.recordEvidence;
         try {
-          const response = await Transactions.destroy(recordId);
-          window.alert('Transaction has been destroyed');
+          await Transactions.destroy(recordId);
+          await Transactions.destroyEvidence(recordEvidence);
 
-          window.location.href = '/';
+          window.alert('Transaction has been destroyed');
         } catch (error) {
           console.error(error);
         }
@@ -155,6 +156,7 @@ const Dashboard = {
             <a class="btn btn-sm btn-danger" href="#"
                id="delete-${transactionRecord.id}"
                data-record-id="${transactionRecord.id}"
+               data-record-evidence="${transactionRecord.evidence}"
             >
               <i class="bi bi-trash3-fill me-1"></i>Delete
             </a>

@@ -70,8 +70,12 @@ const Edit = {
       console.log(formData);
 
       try {
-        if (!formData.evidence) {
-          delete formData.evidence;
+        if (formData.evidence) {
+          // Delete old evidence
+          Transactions.destroyEvidence(this._userTransaction.evidence);
+
+          const storageResponse = await Transactions.storeEvidence(formData.evidence);
+          formData.evidence = storageResponse.metadata.fullPath;
         }
 
         const response = await Transactions.update({
@@ -125,6 +129,15 @@ const Edit = {
     nameInput.value = transactionRecord.name;
     amountInput.value = transactionRecord.amount;
     dateInput.value = transactionRecord.date.slice(0, 16);
+
+    Transactions.getEvidenceURL(transactionRecord.evidence)
+      .then((url) => {
+        evidenceRecord.setAttribute('defaultImage', url);
+        evidenceRecord.setAttribute('defaultImageAlt', transactionRecord.name);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
 
     inputImagePreviewEdit.setAttribute('defaultImage', transactionRecord.evidenceUrl);
     inputImagePreviewEdit.setAttribute('defaultImageAlt', transactionRecord.name);
